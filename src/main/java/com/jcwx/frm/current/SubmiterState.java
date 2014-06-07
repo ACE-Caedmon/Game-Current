@@ -1,5 +1,8 @@
 package com.jcwx.frm.current;
 
 public enum SubmiterState {
-	NORMAL,TRANSITIVE;
+	/**正常状态*/
+    NORMAL,
+    /**过渡状态**/
+    TRANSITIVE;
 }
