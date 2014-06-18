@@ -149,7 +149,7 @@ public class TaskSubmiter implements ITaskSubmiter{
 	}
 
     @Override
-    public Future<?> execute(Callable task) {
+    public Future<?> execute(final Callable task) {
         FutureTask<Object> future=new FutureTask<Object>(task);
         if(executor==null){
             synchronized (parent.getTaskExecutors()) {
@@ -165,7 +165,7 @@ public class TaskSubmiter implements ITaskSubmiter{
     }
 
     @Override
-    public Future<?> scheduledTask(Callable task, long delay, TimeUnit unit) {
+    public Future<?> scheduledTask(final Callable task, long delay, TimeUnit unit) {
         if(delay<=0){
             return execute(task);
         }
