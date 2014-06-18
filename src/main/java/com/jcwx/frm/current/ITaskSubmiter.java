@@ -40,7 +40,7 @@ public interface ITaskSubmiter {
     /**
      * 立即将任务提交到队列中
      * */
-    Future<?> execute(Callable task);
+    <T> Future<T> execute(Callable<T> task);
 
     /**
      * 延时将任务提交到队列中

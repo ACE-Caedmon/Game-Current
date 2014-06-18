@@ -149,8 +149,8 @@ public class TaskSubmiter implements ITaskSubmiter{
 	}
 
     @Override
-    public Future<?> execute(final Callable task) {
-        FutureTask<Object> future=new FutureTask<Object>(task);
+    public <T> Future<T> execute(final Callable<T> task) {
+        FutureTask<T> future=new FutureTask<T>(task);
         if(executor==null){
             synchronized (parent.getTaskExecutors()) {
                 executor=parent.assignTaskExecutor();
