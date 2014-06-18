@@ -1,11 +1,6 @@
 package com.jcwx.frm.current;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -152,5 +147,34 @@ public class TaskSubmiter implements ITaskSubmiter{
 			}
 		}, delay,period, unit);
 	}
-	
+
+    @Override
+    public Future<?> execute(Callable task) {
+        FutureTask<Object> future=new FutureTask<Object>(task);
+        if(executor==null){
+            synchronized (parent.getTaskExecutors()) {
+                executor=parent.assignTaskExecutor();
+            }
+        }
+        if(executeTransTask(future)){
+
+        }else{
+            executor.submit(future);
+        }
+        return future;
+    }
+
+    @Override
+    public Future<?> scheduledTask(Callable task, long delay, TimeUnit unit) {
+        if(delay<=0){
+            return execute(task);
+        }
+        return scheduledExecutorService.schedule(new Runnable() {
+            @Override
+            public void run() {
+                execute(task);
+            }
+        }, delay, unit);
+    }
+
 }
