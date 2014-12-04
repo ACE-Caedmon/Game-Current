@@ -1,5 +1,8 @@
 package com.jcwx.frm.current;
 
+import com.jcwx.frm.current.scheduled.LoopScheduledTask;
+import com.jcwx.frm.current.scheduled.ScheduledTask;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -46,5 +49,19 @@ public interface ITaskSubmiter {
      * 延时将任务提交到队列中
      * */
     Future<?> scheduledTask(Callable task,long delay,TimeUnit unit);
+	/**
+	 * @param task 添加定时循环执行的任务
+	 * */
+	public Future<?> addLoopTask(LoopScheduledTask task);
+	/**
+	 * @param  task 添加延迟执行一次的任务
+	 * */
+	public Future<?> addTask(ScheduledTask task);
+	/**
+	 * 取消指定名称的任务
+	 * @param name 任务唯一标示名 @see com.jcwx.frm.current.scheduled.ScheduledTask#getName()
+	 * @param mayInterruptIfRunning 是否允许任务线程正在执行时中断
+	 * */
+	public boolean cancelTask(String name,boolean mayInterruptIfRunning);
 
 }

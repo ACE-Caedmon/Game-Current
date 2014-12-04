@@ -22,7 +22,7 @@ public class QueueRunnableExecutor  implements RunnableExecutor{
 				Runnable task=queue.take();
 				task.run();
 			} catch (Exception e) {
-				logger.error("执行消息处理任务异常",e);
+				e.printStackTrace();
 			}
 		}
 	}
@@ -33,8 +33,7 @@ public class QueueRunnableExecutor  implements RunnableExecutor{
 			try {
 				queue.put(task);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				logger.error("增加消息处理任务异常",e);
+				e.printStackTrace();
 			}
 		}
 
