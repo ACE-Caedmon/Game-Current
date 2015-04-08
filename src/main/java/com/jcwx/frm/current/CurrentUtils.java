@@ -7,6 +7,7 @@ public class CurrentUtils {
 	/**
 	 * 创建指定线程名前缀的ThreadFactory，后缀ID自增
 	 * @param prefix 线程名前缀
+	 * @return 指定线程工厂类
 	 * */
 	public static ThreadFactory createThreadFactory(final String prefix){
 		return new ThreadFactory() {
