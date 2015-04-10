@@ -13,30 +13,30 @@ import java.util.concurrent.ThreadFactory;
  * 线程并发包管理类，负责为Submiter分配RunnableExecutor
  *@author Chenlong
  * */
-public class QueueActorManager extends ActorManager {
-	private List<QueueActorExecutor> executors;
+public class QueueActorManager extends AbstractActorManager {
+	private List<IActorExecutor> executors;
 	private static final ScheduledExecutorService scheduledExecutorService=Executors.newSingleThreadScheduledExecutor();
     private Map<String,IActor> actorMap=new ConcurrentHashMap<String, IActor>();
 	public QueueActorManager(int threadSize, ThreadFactory factory) {
 		super(threadSize, factory);
-		executors=new ArrayList<QueueActorExecutor>(threadSize);
+		executors=new ArrayList<IActorExecutor>(threadSize);
 		// TODO Auto-generated constructor stub
 	}
 	
 	/**
 	 * 得到一个MessageTaskExecutor
 	 * */
-	public QueueActorExecutor assignActorExecutor(){
+	public IActorExecutor assignActorExecutor(){
 		//判断集合中Executor是否已达到配置上限
 		if(executors.size()<threadSize){
 			//直接取出空闲的Executor
-			for(QueueActorExecutor executor:executors){
+			for(IActorExecutor executor:executors){
 				if(executor.getUndoneTaskSize()==0&&executor.getActorCount()==0){
 					return executor;
 				}
 			}
 			//如果没有空闲的Executor则创建新的到集合中，并提交到线程池
-			QueueActorExecutor executor=new ActorExecutor();
+			IActorExecutor executor=new ActorExecutor();
 			executors.add(executor);
 			threadPool.execute(executor);
 			return executor;
@@ -69,7 +69,7 @@ public class QueueActorManager extends ActorManager {
      * @return  获取所有用来处理任务的RunnableExecutor
      * */
 	@Override
-	public List<QueueActorExecutor> getActorExecutors() {
+	public List<IActorExecutor> getActorExecutors() {
 		// TODO Auto-generated method stub
 		return executors;
 	}

@@ -4,14 +4,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * 顺序执行的RunnableExecutor
  * 确保先提交的任务一定先执行
  * @author Chenlong
  * */
-public class ActorExecutor implements QueueActorExecutor {
+public class ActorExecutor implements IActorExecutor {
 	private BlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>();
 	private Thread thread;
 	private AtomicInteger actorCount=new AtomicInteger(0);
@@ -48,9 +46,13 @@ public class ActorExecutor implements QueueActorExecutor {
 	 * 根据RunnableExecutor中等待完成任务的数量比较优先级
 	 * */
 	@Override
-	public int compareTo(QueueActorExecutor o) {
+	public int compareTo(IActorExecutor o) {
 		// TODO Auto-generated method stub
-		return getUndoneTaskSize()-o.getUndoneTaskSize();
+		int compare=getUndoneTaskSize()-o.getUndoneTaskSize();
+		if(compare==0){
+			compare=actorCount.get()-o.getActorCount();
+		}
+		return compare;
 	}
 	@Override
 	public Thread workThread() {

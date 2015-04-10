@@ -21,11 +21,11 @@ public interface IActorManager {
 	 * 分配一个RunnableExecutor,多个不同的TaskSubmiter可以共用同一个RunnableExecutor
 	 * RunnableExecutor是负责消费执行任务队列的
 	 * */
-	QueueActorExecutor assignActorExecutor();
+	IActorExecutor assignActorExecutor();
 	/**
 	 * 获取所有RunnableExecutor
 	 * */
-	List<QueueActorExecutor> getActorExecutors();
+	List<IActorExecutor> getActorExecutors();
 
     void shutdown();
 

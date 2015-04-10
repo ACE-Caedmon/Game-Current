@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author Chenlong
  * */
 public class Actor implements IActor {
-	protected volatile QueueActorExecutor executor;
+	protected volatile IActorExecutor executor;
 	private BlockingQueue<Runnable> waitQueue=new LinkedBlockingQueue<Runnable>();
 	private volatile ActorState state= ActorState.NORMAL;
 	private Lock lock=new ReentrantLock(true);
@@ -35,13 +35,13 @@ public class Actor implements IActor {
 		this.scheduledExecutorService=parent.getScheduledExecutorService();
 		this.futures=new TreeMap<String, Future<?>>();
 	}
-	public QueueActorExecutor getExecutor(){
+	public IActorExecutor getExecutor(){
 		return executor;
 	}
 	/**
 	 * 如果是切换Executor,在切换Executor之前，必须将State设置为SubmiterState.TRANSITIVE
 	 * */
-	public void setExecutor(QueueActorExecutor executor){
+	public void setExecutor(IActorExecutor executor){
 		lock.lock();
 		try {
 			if(executor==null){
@@ -63,7 +63,7 @@ public class Actor implements IActor {
     /**
      * 将缓冲队列中的任务提交到executor的执行队列中
      * */
-	private void transfer(QueueActorExecutor executor) {
+	private void transfer(IActorExecutor executor) {
 		if(state== ActorState.TRANSITIVE){//必须是过渡状态才允许此操作
 			for(Runnable task:waitQueue){
 				executor.submit(task);

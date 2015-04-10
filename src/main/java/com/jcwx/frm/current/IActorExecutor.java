@@ -4,7 +4,7 @@ package com.jcwx.frm.current;
  * 任务执行Executor接口
  * @author Chenlong
  * */
-public interface QueueActorExecutor extends Runnable,Comparable<QueueActorExecutor>{
+public interface IActorExecutor extends Runnable,Comparable<IActorExecutor>{
 	/**
 	 * 提交任务给Executor
 	 * @param task 提交的任务

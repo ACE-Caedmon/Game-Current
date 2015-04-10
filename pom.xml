@@ -4,7 +4,7 @@
 
   <groupId>com.jcwx</groupId>
   <artifactId>game_current</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <packaging>jar</packaging>
 
   <name>game_current</name>
@@ -22,7 +22,7 @@
 		<snapshotRepository>
 			<id>nexus-snapshots</id>
 			<name>Nexus Snapshot Repository</name>
-			<url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
+			<url>http://192.168.0.115:8081/nexus/content/repositories/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
   <dependencies>

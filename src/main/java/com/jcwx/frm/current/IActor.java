@@ -19,11 +19,11 @@ public interface IActor {
 	/**
 	 * 获取任务执行Executor
 	 * */
-	QueueActorExecutor getExecutor();
+	IActorExecutor getExecutor();
 	/**
 	 * 设置提交者的任务执行Executor
 	 * */
-	void setExecutor(QueueActorExecutor executor);
+	void setExecutor(IActorExecutor executor);
 	/**
 	 * 立即将任务提交到队列中
 	 * */
