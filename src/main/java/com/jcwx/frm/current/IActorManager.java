@@ -29,7 +29,5 @@ public interface IActorManager {
 
     void shutdown();
 
-    IActor createActor(String actorName);
-
     IActor getActor(String actorName);
 }

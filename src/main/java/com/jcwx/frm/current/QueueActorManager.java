@@ -4,27 +4,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
 /**
- * 线程并发包管理类，负责为Submiter分配RunnableExecutor
+ * 线程并发包管理类，负责为Actor分配Actorxecutor
  *@author Chenlong
  * */
 public class QueueActorManager extends AbstractActorManager {
 	private List<IActorExecutor> executors;
-	private static final ScheduledExecutorService scheduledExecutorService=Executors.newSingleThreadScheduledExecutor();
+	private ScheduledExecutorService scheduledExecutorService=Executors.newSingleThreadScheduledExecutor();
     private Map<String,IActor> actorMap=new ConcurrentHashMap<String, IActor>();
-	public QueueActorManager(int threadSize, ThreadFactory factory) {
-		super(threadSize, factory);
-		executors=new ArrayList<IActorExecutor>(threadSize);
+	public QueueActorManager(int actorThreadSize, ThreadFactory actorThreadFactory) {
+		super(actorThreadSize, actorThreadFactory);
+		executors=new ArrayList<IActorExecutor>(actorThreadSize);
 		// TODO Auto-generated constructor stub
+	}
+	public QueueActorManager(int actorThreadSize,ThreadFactory actorThreadFactory,int scheduleThreadSize,ThreadFactory scheduleThreadFactory){
+		this(actorThreadSize,actorThreadFactory);
+		this.scheduledExecutorService=Executors.newScheduledThreadPool(scheduleThreadSize,scheduleThreadFactory);
 	}
 	
 	/**
-	 * 得到一个MessageTaskExecutor
+	 * 得到一个IActorExecutor
 	 * */
 	public IActorExecutor assignActorExecutor(){
 		//判断集合中Executor是否已达到配置上限
@@ -41,7 +42,7 @@ public class QueueActorManager extends AbstractActorManager {
 			threadPool.execute(executor);
 			return executor;
 		}else{//如果集合中元素已满，则取出一个任务最少的
-			Collections.sort(executors);
+			JDK6Sorts.sort(executors);
 			return executors.get(0);
 		}
 		
@@ -74,12 +75,6 @@ public class QueueActorManager extends AbstractActorManager {
 		return executors;
 	}
 
-    @Override
-    public IActor createActor(String actorName) {
-        IActor actor=createActor();
-        actorMap.put(actorName,actor);
-        return actor;
-    }
 
     @Override
     public IActor getActor(String actorName) {

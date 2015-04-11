@@ -1,0 +1,18 @@
+
+
+
+
+==== 1.0.3
+* Compatible JDK1.7,the sorting on "com.jcwx.frm.current.ActorExecutor" will throws IllegalArgumentException when running on JDK1.7,
+ so I add 'com.jcwx.frm.current.JDK6Sorts' to sort ActorExeuctor,do not use jdk1.7 timesort.Thanks for 'Yi.Xue' test and find this bug.
+
+==== 1.0.2
+* Change some classess's name.
+
+==== 1.0.1
+* Changes the comparison algorithm of com.jcwx.frm.current.ActorExecutor,old comparison only compare the executor's undone task size,new comparison algorithm will compare the task size and actorCount,details see the source.
+
+
+==== 1.0.0
+* Changes the classes named '*Submiter' to '*Actor',easy to understand,please Google 'Actor Model'
+* Fix com.jcwx.frm.IActor.cancelTask() bug,if the task is completed will return false and do not remove the future in the actor futures map.

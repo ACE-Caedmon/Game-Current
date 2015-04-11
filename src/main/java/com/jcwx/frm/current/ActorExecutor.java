@@ -21,7 +21,7 @@ public class ActorExecutor implements IActorExecutor {
 				Runnable task=queue.take();
 				task.run();
 			} catch (Exception e) {
-				System.out.println("执行任务异常");
+				System.err.println("执行任务异常");
 				e.printStackTrace();
 			}
 		}
@@ -33,7 +33,7 @@ public class ActorExecutor implements IActorExecutor {
 			try {
 				queue.put(task);
 			} catch (Exception e) {
-				System.out.println("提交任务异常");
+				System.err.println("提交任务异常");
 				e.printStackTrace();
 			}
 		}
