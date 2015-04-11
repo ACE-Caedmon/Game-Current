@@ -64,6 +64,7 @@ public class QueueActorManager extends AbstractActorManager {
 		// TODO Auto-generated method stub
 		IActor actor=new Actor(this);
 		actor.setExecutor(assignActorExecutor());
+		actor.getExecutor().incrActorCount();
 		return actor;
 	}
     /**

@@ -115,7 +115,6 @@ public class Actor implements IActor {
 		if(executor==null){
 			synchronized (parent.getActorExecutors()) {
 				executor=parent.assignActorExecutor();
-				executor.incrActorCount();
 			}
 		}
 		//过渡期任务,Actor即将变更Executor
