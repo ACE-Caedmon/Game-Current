@@ -3,6 +3,7 @@ package com.jcwx.frm.current;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,7 +30,7 @@ public class Actor implements IActor {
 	private static Logger logger =LoggerFactory.getLogger(Actor.class);
 	private ScheduledExecutorService scheduledExecutorService;
 	private Map<String, Future<?>> futures;
-	private int count;
+	private AtomicBoolean hasReleased=new AtomicBoolean(false);
 	public Actor(IActorManager parent){
 		this.parent=parent;
 		this.scheduledExecutorService=parent.getScheduledExecutorService();
@@ -105,7 +106,7 @@ public class Actor implements IActor {
 	}
 	/**
 	 * 保证同一Session中的任务必须在同一线程中顺序执行
-	 * 判断Submiter是否为过渡状态，如果是过渡状态
+	 * 判断Actor是否为过渡状态，如果是过渡状态
 	 * 则任务不直接提交到Executor执行队列中，而且是提交到过渡任务队列中
 	 * 当submiter切换Executor完毕后，将过渡任务队列中的内容提交到新的Executor执行。
 	 * */
@@ -141,21 +142,21 @@ public class Actor implements IActor {
 	}
 	@Override
 	public Future<?> scheduleAtFixedRateTask(final Runnable task, long delay, long period, TimeUnit unit) {
-		return scheduledExecutorService.scheduleAtFixedRate(new Runnable() {			
+		return scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				execute(task);
 			}
-		}, delay,period, unit);
+		}, delay, period, unit);
 	}
 	@Override
 	public Future<?> scheduleWithFixedDelayTask(final Runnable task, long delay, long period, TimeUnit unit) {
-		return scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {			
+		return scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				execute(task);
 			}
-		}, delay,period, unit);
+		}, delay, period, unit);
 	}
 
     @Override
@@ -214,7 +215,7 @@ public class Actor implements IActor {
 			futures.put(task.getName(), future);
 			return futures.get(task.getName());
 		}else{
-            logger.error("定时任务已存在:name={}",task.getName());
+            logger.error("定时任务已存在:name={}", task.getName());
 			return null;
 		}
 
@@ -231,10 +232,32 @@ public class Actor implements IActor {
 			boolean b=future.cancel(mayInterruptIfRunning);
 			return b;
 		}else{
-            logger.warn("任务不存在:name = {}", name);
+            logger.warn("Can not find task:name = {}", name);
 			return false;
 		}
 
+	}
+
+	@Override
+	public boolean releaseExecutor() {
+		if(executor!=null){
+			if(hasReleased.compareAndSet(false,true)){
+				executor.decrActorCount();
+				return true;
+			}
+		}else{
+			throw new NullPointerException("Actor has no ActorExecutor");
+		}
+		return false;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		//如果未被手动释放
+		if(!hasReleased.get()){
+			releaseExecutor();
+		}
 	}
 	/**
 	 * 任务执行完毕后，会从缓存中移除保存的Future对象，只针对ScheduledTask
@@ -248,11 +271,4 @@ public class Actor implements IActor {
 
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		if(executor!=null){
-			executor.decrActorCount();
-		}
-	}
 }

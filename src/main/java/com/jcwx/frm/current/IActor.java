@@ -58,18 +58,23 @@ public interface IActor {
 	/**
 	 * @param task 添加定时循环执行的任务
 	 * */
-	public Future<?> addLoopTask(LoopScheduledTask task);
+	Future<?> addLoopTask(LoopScheduledTask task);
 	/**
 	 * @param  task 添加延迟执行一次的任务
 	 * @return  future
 	 * */
-	public Future<?> addTask(ScheduledTask task);
+	Future<?> addTask(ScheduledTask task);
 	/**
 	 * 取消指定名称的任务
 	 * @param name 任务唯一标示名 @see com.jcwx.frm.current.scheduled.ScheduledTask#getName()
 	 * @param mayInterruptIfRunning 是否允许任务线程正在执行时中断
 	 * @return true 成功取消 false 取消失败或者已经被执行
 	 * */
-	public boolean cancelTask(String name,boolean mayInterruptIfRunning);
-
+	boolean cancelTask(String name,boolean mayInterruptIfRunning);
+	/**
+	 * 释放持有的ActorExecutor，当确信Actor不会再被使用时,记得调用此方法
+	 * 否则只能等到垃圾回收时才会调用
+	 * @return true 成功释放 false 已经被释放过
+	 * */
+	boolean releaseExecutor();
 }
