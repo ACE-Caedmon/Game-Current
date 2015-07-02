@@ -1,10 +1,12 @@
 package com.jcwx.frm.current;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * 线程并发包管理类，负责为Actor分配Actorxecutor
@@ -16,7 +18,7 @@ public class QueueActorManager extends AbstractActorManager {
     private Map<String,IActor> actorMap=new ConcurrentHashMap<String, IActor>();
 	public QueueActorManager(int actorThreadSize, ThreadFactory actorThreadFactory) {
 		super(actorThreadSize, actorThreadFactory);
-		executors=new ArrayList<IActorExecutor>(actorThreadSize);
+		executors=new ArrayList<IActorExecutor>();
 		// TODO Auto-generated constructor stub
 	}
 	public QueueActorManager(int actorThreadSize,ThreadFactory actorThreadFactory,int scheduleThreadSize,ThreadFactory scheduleThreadFactory){
@@ -27,7 +29,7 @@ public class QueueActorManager extends AbstractActorManager {
 	/**
 	 * 得到一个IActorExecutor
 	 * */
-	public IActorExecutor assignActorExecutor(){
+	public synchronized IActorExecutor assignActorExecutor(){
 		//判断集合中Executor是否已达到配置上限
 		if(executors.size()<threadSize){
 			//直接取出空闲的Executor

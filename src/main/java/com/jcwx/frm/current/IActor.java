@@ -26,8 +26,9 @@ public interface IActor {
 	void setExecutor(IActorExecutor executor);
 	/**
 	 * 立即将任务提交到队列中
+	 * 调用该方法时,有异常会立即抛出
 	 * */
-	Future<?> execute(Runnable task);
+	Future execute(Runnable task);
 	/**
 	 * 延时将任务提交到队列中
 	 * @param task 任务
@@ -45,11 +46,12 @@ public interface IActor {
      * */
 	Future<?> scheduleWithFixedDelayTask(Runnable task,long delay,long period,TimeUnit unit);
     /**
-     * 立即将任务提交到队列中
+     * 立即将任务提交到队列中,调用该方法时,如果Callable执行中有异常，
+	 * 需要通过actor.submit(task).get()来捕获异常
 	 * @param task 任务
 	 * @return future
      * */
-    <T> Future<T> execute(Callable<T> task);
+    <T> Future<T> submit(Callable<T> task);
 
     /**
      * 延时将任务提交到队列中

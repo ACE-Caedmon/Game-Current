@@ -1,6 +1,8 @@
 package com.jcwx.frm.current;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,34 +12,36 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Chenlong
  * */
 public class ActorExecutor implements IActorExecutor {
-	private BlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>();
+	private BlockingQueue<FutureTask> queue=new LinkedBlockingQueue<FutureTask>();
 	private Thread thread;
 	private AtomicInteger actorCount=new AtomicInteger(0);
+	private long totalTime;
 	@Override
 	public void run() {
 		this.thread=Thread.currentThread();
 		for(;;){
 			try {
-				Runnable task=queue.take();
-				task.run();
-			} catch (Exception e) {
-				System.err.println("执行任务异常");
+				FutureTask task=queue.take();
+				runTask(task);
+			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	public void submit(Runnable task){
-		if(thread==Thread.currentThread()){
-			task.run();
-		}else{
-			try {
+	public void submit(FutureTask task){
+		try {
+			if(thread==Thread.currentThread()){
+				runTask(task);
+			}else{
 				queue.put(task);
-			} catch (Exception e) {
-				System.err.println("提交任务异常");
-				e.printStackTrace();
 			}
+		} catch (Throwable e) {
+			e.printStackTrace();
 		}
-
+	}
+	private void runTask(FutureTask task) throws Throwable{
+		task.run();
+		task.get();
 	}
 	public int getUndoneTaskSize(){
 		return queue.size();
@@ -75,4 +79,7 @@ public class ActorExecutor implements IActorExecutor {
 		return actorCount.get();
 	}
 
+	public long getTotalTime() {
+		return totalTime;
+	}
 }

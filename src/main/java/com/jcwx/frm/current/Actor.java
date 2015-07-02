@@ -1,17 +1,16 @@
 package com.jcwx.frm.current;
 
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.jcwx.frm.current.scheduled.LoopScheduledTask;
 import com.jcwx.frm.current.scheduled.ScheduledTask;
 import com.jcwx.frm.current.scheduled.TaskFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  * 并发包中核心的类，负责处理所有任务，并且保证同一Actor提交的任务
  * 都在同一线程中顺序执行,每个Actor对应一个
@@ -23,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * */
 public class Actor implements IActor {
 	protected volatile IActorExecutor executor;
-	private BlockingQueue<Runnable> waitQueue=new LinkedBlockingQueue<Runnable>();
+	private BlockingQueue<FutureTask> waitQueue=new LinkedBlockingQueue<FutureTask>();
 	private volatile ActorState state= ActorState.NORMAL;
 	private Lock lock=new ReentrantLock(true);
 	private IActorManager parent;
@@ -34,22 +33,22 @@ public class Actor implements IActor {
 	public Actor(IActorManager parent){
 		this.parent=parent;
 		this.scheduledExecutorService=parent.getScheduledExecutorService();
-		this.futures=new TreeMap<String, Future<?>>();
+		this.futures=new ConcurrentHashMap<String, Future<?>>();
 	}
 	public IActorExecutor getExecutor(){
 		return executor;
 	}
 	/**
-	 * 如果是切换Executor,在切换Executor之前，必须将State设置为SubmiterState.TRANSITIVE
+	 * 如果是切换Executor,在切换Executor之前，必须将State设置为ActorState.TRANSITIVE
 	 * */
 	public void setExecutor(IActorExecutor executor){
 		lock.lock();
 		try {
 			if(executor==null){
-				throw new NullPointerException("任务处理器executor不能为空,否则提交的任务不能执行");
+				throw new NullPointerException("ActorExecutor is null");
 			}
 			if(this.executor!=null&&this.executor.workThread()!=null&&this.executor!=executor){//切换Executor
-				logger.debug("Actor 切换线程:old={},new={} ",this.executor.workThread(),executor.workThread());
+				//logger.debug("Actor change thread:old={},new={} ",this.executor.workThread(),executor.workThread());
 				state= ActorState.TRANSITIVE;
 				transfer(executor);
 				state= ActorState.NORMAL;
@@ -66,7 +65,7 @@ public class Actor implements IActor {
      * */
 	private void transfer(IActorExecutor executor) {
 		if(state== ActorState.TRANSITIVE){//必须是过渡状态才允许此操作
-			for(Runnable task:waitQueue){
+			for(FutureTask task:waitQueue){
 				executor.submit(task);
 			}
 		}else{
@@ -80,9 +79,9 @@ public class Actor implements IActor {
 	}
     /**
      * @param  task 构造的Future
-     * @return true 过渡期任务，提交到缓冲waitQueue中 false 任务会直接提交到执行队列中,走executor.submit()流程
+     * @return true 过渡期任务，提交到缓冲waitQueue中 false 任务会直接提交到执行队列中,走executor.execute()流程
      * */
-	private boolean executeTransTask(Runnable task) {
+	private boolean executeTransTask(FutureTask task) {
         if(state== ActorState.TRANSITIVE){
             lock.lock();
             try{
@@ -108,30 +107,29 @@ public class Actor implements IActor {
 	 * 保证同一Session中的任务必须在同一线程中顺序执行
 	 * 判断Actor是否为过渡状态，如果是过渡状态
 	 * 则任务不直接提交到Executor执行队列中，而且是提交到过渡任务队列中
-	 * 当submiter切换Executor完毕后，将过渡任务队列中的内容提交到新的Executor执行。
+	 * 当actor切换Executor完毕后，将过渡任务队列中的内容提交到新的Executor执行。
 	 * */
 	@Override
-	public Future<?> execute(Runnable task) {
-		FutureTask<Object> future=new FutureTask<Object>(task, null);
+	public Future execute(final Runnable task) {
+		Callable callable=new Callable() {
+			@Override
+			public Object call() throws Exception {
+				task.run();
+				return null;
+			}
+		};
 		if(executor==null){
 			synchronized (parent.getActorExecutors()) {
 				executor=parent.assignActorExecutor();
+
 			}
 		}
-		//过渡期任务,Actor即将变更Executor
-		if(executeTransTask(future)){
-			executor.decrActorCount();
-		}else{
-			executor.submit(future);
-		}
-		return future;
+
+		return submit(callable);
 	}
 	@Override
 	public Future<?> scheduledTask(final Runnable task,
 			long delay, TimeUnit unit) {
-		if(delay<=0){
-			return execute(task);
-		}
 		Future<?> result=scheduledExecutorService.schedule(new Runnable() {
 			@Override
 			public void run() {
@@ -160,7 +158,7 @@ public class Actor implements IActor {
 	}
 
     @Override
-    public <T> Future<T> execute(final Callable<T> task) {
+    public <T> Future<T> submit(final Callable<T> task) {
         FutureTask<T> future=new FutureTask<T>(task);
         if(executor==null){
             synchronized (parent.getActorExecutors()) {
@@ -178,12 +176,12 @@ public class Actor implements IActor {
     @Override
     public Future<?> scheduledTask(final Callable task, long delay, TimeUnit unit) {
         if(delay<=0){
-            return execute(task);
+            return submit(task);
         }
 		return scheduledExecutorService.schedule(new Runnable() {
             @Override
             public void run() {
-                execute(task);
+                submit(task);
             }
         }, delay, unit);
     }
@@ -232,7 +230,6 @@ public class Actor implements IActor {
 			boolean b=future.cancel(mayInterruptIfRunning);
 			return b;
 		}else{
-            logger.warn("Can not find task:name = {}", name);
 			return false;
 		}
 
@@ -266,7 +263,8 @@ public class Actor implements IActor {
 
 		@Override
 		public void completed(ScheduledTask task) {
-			cancelTask(task.getName(), true);
+			//只需要移除Future对象，不需要取消执行任务
+			futures.remove(task.getName());
 		}
 
 	}
